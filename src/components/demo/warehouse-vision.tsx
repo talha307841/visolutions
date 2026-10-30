@@ -10,6 +10,7 @@ import {
   ScanLine,
 } from "lucide-react";
 import raw from "@/data/warehouse-detections.json";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 type Kind = "parcel" | "person" | "cart";
 type Detection = {
@@ -89,6 +90,7 @@ function PredictionBoxes({
 }
 export function WarehousePreview({ hero = false }: { hero?: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
+  const hydrated = useHydrated();
   const [time, setTime] = useState(0.24);
   useEffect(() => {
     const v = video.current;
@@ -106,26 +108,37 @@ export function WarehousePreview({ hero = false }: { hero?: boolean }) {
     );
     o.observe(v);
     return () => o.disconnect();
-  }, []);
+  }, [hydrated]);
   return (
     <div
       className={`story-preview warehouse-preview ${hero ? "story-preview-hero" : ""}`}
     >
-      <video
-        ref={video}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        poster="/demo/posters/warehouse-operations.webp"
-        onLoadedMetadata={(e) => {
-          e.currentTarget.currentTime = 0.24;
-        }}
-        onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-        aria-label="Recorded warehouse footage with sampled model predictions"
-      >
-        <source src="/demo/warehouse-operations.mp4" type="video/mp4" />
-      </video>
+      {hydrated ? (
+        <video
+          ref={video}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/demo/posters/warehouse-operations.webp"
+          onLoadedMetadata={(e) => {
+            e.currentTarget.currentTime = 0.24;
+          }}
+          onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+          aria-label="Recorded warehouse footage with sampled model predictions"
+        >
+          <source src="/demo/warehouse-operations.mp4" type="video/mp4" />
+        </video>
+      ) : (
+        <div
+          className="video-poster"
+          style={{
+            backgroundImage: "url(/demo/posters/warehouse-operations.webp)",
+          }}
+          role="img"
+          aria-label="Warehouse sample video preview"
+        />
+      )}
       <PredictionBoxes time={time} />
       <div className="story-preview-top">
         <span>▣ WAREHOUSE / PARCEL SORTING</span>
@@ -147,6 +160,7 @@ export function WarehousePreview({ hero = false }: { hero?: boolean }) {
 export function WarehouseView() {
   const video = useRef<HTMLVideoElement>(null),
     screen = useRef<HTMLDivElement>(null);
+  const hydrated = useHydrated();
   const [time, setTime] = useState(0.24),
     [playing, setPlaying] = useState(false),
     [overlay, setOverlay] = useState(true),
@@ -221,31 +235,42 @@ export function WarehouseView() {
           </div>
         </div>
         <div className="sc-video-frame warehouse-stage" ref={screen}>
-          <video
-            ref={video}
-            controls
-            playsInline
-            preload="metadata"
-            poster="/demo/posters/warehouse-operations.webp"
-            onLoadedMetadata={(e) => {
-              e.currentTarget.currentTime = 0.24;
-              setTime(0.24);
-            }}
-            onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-            onEnded={() => setPlaying(false)}
-            aria-label="Recorded warehouse footage with model predictions"
-          >
-            <source src="/demo/warehouse-operations.mp4" type="video/mp4" />
-            <track
-              kind="captions"
-              src="/demo/warehouse-operations.vtt"
-              srcLang="en"
-              label="English descriptions"
-              default
+          {hydrated ? (
+            <video
+              ref={video}
+              controls
+              playsInline
+              preload="metadata"
+              poster="/demo/posters/warehouse-operations.webp"
+              onLoadedMetadata={(e) => {
+                e.currentTarget.currentTime = 0.24;
+                setTime(0.24);
+              }}
+              onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onEnded={() => setPlaying(false)}
+              aria-label="Recorded warehouse footage with model predictions"
+            >
+              <source src="/demo/warehouse-operations.mp4" type="video/mp4" />
+              <track
+                kind="captions"
+                src="/demo/warehouse-operations.vtt"
+                srcLang="en"
+                label="English descriptions"
+                default
+              />
+            </video>
+          ) : (
+            <div
+              className="video-poster"
+              style={{
+                backgroundImage: "url(/demo/posters/warehouse-operations.webp)",
+              }}
+              role="img"
+              aria-label="Warehouse sample video preview"
             />
-          </video>
+          )}
           {overlay && (
             <PredictionBoxes
               time={time}

@@ -250,3 +250,45 @@ test("mobile scenario selector and playback controls", async ({ page }) => {
     "No suitable waste-handling footage",
   );
 });
+
+test("video pages hydrate when a browser extension injects playback controls", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.addInitScript(() => {
+    const injected = new WeakSet<Element>();
+    const addControls = (root: Node) => {
+      if (!(root instanceof Element)) return;
+      const videos = [
+        ...(root.matches("video") ? [root] : []),
+        ...root.querySelectorAll("video"),
+      ];
+      for (const video of videos) {
+        if (injected.has(video) || !video.parentElement?.parentElement)
+          continue;
+        injected.add(video);
+        const panel = document.createElement("div");
+        panel.className = "PlayBackRatePanelYPSC";
+        panel.style.display = "none";
+        video.parentElement.parentElement.insertBefore(
+          panel,
+          video.parentElement,
+        );
+      }
+    };
+    new MutationObserver((records) => {
+      for (const record of records)
+        for (const node of record.addedNodes) addControls(node);
+    }).observe(document, { childList: true, subtree: true });
+  });
+  await page.goto("/");
+  await expect(page.locator(".hero-v2-visual video")).toBeAttached();
+  await page.getByRole("link", { name: "Explore interactive demo" }).click();
+  await expect(page.locator(".warehouse-stage video")).toBeAttached();
+  await page.getByRole("button", { name: /Forklift & people/ }).click();
+  await expect(page.locator(".sc-video-frame video")).toBeAttached();
+  await page.getByRole("button", { name: /Protective equipment/ }).click();
+  await expect(page.locator(".sc-video-frame video")).toBeAttached();
+  expect(errors).toEqual([]);
+});

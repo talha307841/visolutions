@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useHydrated } from "@/hooks/use-hydrated";
 import type { DemoScenario } from "@/data/demo-scenarios";
 
 type OverlayBox = {
@@ -65,6 +66,7 @@ export function StoryPreview({
   hero?: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const hydrated = useHydrated();
   const [time, setTime] = useState(0);
   useEffect(() => {
     const video = ref.current;
@@ -82,22 +84,31 @@ export function StoryPreview({
     );
     observer.observe(video);
     return () => observer.disconnect();
-  }, [scenario.id]);
+  }, [scenario.id, hydrated]);
   if (!scenario.video) return null;
   return (
     <div className={`story-preview ${hero ? "story-preview-hero" : ""}`}>
-      <video
-        ref={ref}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        poster={scenario.poster}
-        onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-        aria-label={`${scenario.title}: prerecorded stock video with illustrative overlays`}
-      >
-        <source src={scenario.video} type="video/mp4" />
-      </video>
+      {hydrated ? (
+        <video
+          ref={ref}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={scenario.poster}
+          onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+          aria-label={`${scenario.title}: prerecorded stock video with illustrative overlays`}
+        >
+          <source src={scenario.video} type="video/mp4" />
+        </video>
+      ) : (
+        <div
+          className="video-poster"
+          style={{ backgroundImage: `url(${scenario.poster})` }}
+          role="img"
+          aria-label={`${scenario.title} sample video preview`}
+        />
+      )}
       <Overlay scenario={scenario} time={time} />
       <div className="story-preview-top">
         <span>▣ {scenario.area}</span>

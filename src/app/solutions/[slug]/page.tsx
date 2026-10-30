@@ -39,6 +39,7 @@ export default async function Page({
                 src={s.image}
                 alt={s.imageAlt}
                 fill
+                loading="eager"
                 sizes="(max-width: 760px) 100vw, 55vw"
               />
             </div>

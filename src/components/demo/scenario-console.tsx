@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { scenarios, scenarioById } from "@/data/demo-scenarios";
 import { Overlay } from "./story-video";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { PersonDetector } from "./person-detector";
 import { WarehouseView } from "./warehouse-vision";
 const icons = {
@@ -52,6 +53,7 @@ export function ScenarioConsole({
     ),
     [ack, setAck] = useState<Record<string, boolean>>({}),
     [filter, setFilter] = useState("all");
+  const hydrated = useHydrated();
   const video = useRef<HTMLVideoElement>(null);
   const screen = useRef<HTMLDivElement>(null);
   const scenario = scenarioById(id);
@@ -156,28 +158,39 @@ export function ScenarioConsole({
               {scenario.video ? (
                 <>
                   <div className="sc-video-frame" ref={screen}>
-                    <video
-                      key={scenario.id}
-                      ref={video}
-                      controls
-                      playsInline
-                      preload="metadata"
-                      poster={scenario.poster}
-                      onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-                      onPlay={() => setPlaying(true)}
-                      onPause={() => setPlaying(false)}
-                      onEnded={() => setPlaying(false)}
-                      aria-label={`${scenario.title} prerecorded stock footage`}
-                    >
-                      <source src={scenario.video} type="video/mp4" />
-                      <track
-                        kind="captions"
-                        src={`/demo/${scenario.id}.vtt`}
-                        srcLang="en"
-                        label="English descriptions"
-                        default
+                    {hydrated ? (
+                      <video
+                        key={scenario.id}
+                        ref={video}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        poster={scenario.poster}
+                        onTimeUpdate={(e) =>
+                          setTime(e.currentTarget.currentTime)
+                        }
+                        onPlay={() => setPlaying(true)}
+                        onPause={() => setPlaying(false)}
+                        onEnded={() => setPlaying(false)}
+                        aria-label={`${scenario.title} prerecorded stock footage`}
+                      >
+                        <source src={scenario.video} type="video/mp4" />
+                        <track
+                          kind="captions"
+                          src={`/demo/${scenario.id}.vtt`}
+                          srcLang="en"
+                          label="English descriptions"
+                          default
+                        />
+                      </video>
+                    ) : (
+                      <div
+                        className="video-poster"
+                        style={{ backgroundImage: `url(${scenario.poster})` }}
+                        role="img"
+                        aria-label={`${scenario.title} sample video preview`}
                       />
-                    </video>
+                    )}
                     {overlays && !personModel && (
                       <Overlay scenario={scenario} time={time} />
                     )}
